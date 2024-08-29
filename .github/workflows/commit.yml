@@ -2,8 +2,8 @@ name: Build and Deploy .NET Project
 
 on:
   push:
-    branches:
       - main
+  workflow_dispacth:
 
 jobs:
   build:
