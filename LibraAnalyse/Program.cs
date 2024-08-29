@@ -9,7 +9,8 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddRazorPages();
 
 // Register ClickHouseService with dependency injection
-var clickHouseConnectionString = "Host=db.0l.fyi;Port=443;Username=ol_ro;Password=389c0705a2e2f17efc854cb02da03486;Database=olfyi;Secure=true;";
+var clickHouseConnectionString = Environment.GetEnvironmentVariable("CLICKHOUSE_CONNECTION_STRING");
+
 builder.Services.AddSingleton(new ClickHouseService(clickHouseConnectionString));
 
 var app = builder.Build();
