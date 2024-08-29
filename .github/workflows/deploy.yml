@@ -30,6 +30,9 @@ jobs:
     - name: Publish project
       run: dotnet publish --configuration Release --output ./output
 
+    - name: Enable Debugging
+      run: echo "::set-env name=ACTIONS_RUNNER_DEBUG::true"
+
     - name: Deploy to server
       env:
         CLICKHOUSE_CONNECTION_STRING: ${{ secrets.CLICKHOUSE_CONNECTION_STRING }}
