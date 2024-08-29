@@ -28,10 +28,11 @@ jobs:
       run: dotnet test --no-build --verbosity normal
 
     - name: Conditional Debugging Setup
-      if: github.actor == 'your-github-username'
+      if: always()  # Temporary condition to ensure it runs
       env:
-        CLICKHOUSE_CONNECTION_STRING: ${{ secrets.CLICKHOUSE_CONNECTION_STRING }}
+      CLICKHOUSE_CONNECTION_STRING: ${{ secrets.CLICKHOUSE_CONNECTION_STRING }}
       run: echo "ACTIONS_RUNNER_DEBUG=true" >> $GITHUB_ENV
+
 
     - name: Deploy to server
       env:
