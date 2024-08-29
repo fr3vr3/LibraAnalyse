@@ -12,7 +12,6 @@ builder.Services.AddRazorPages();
 // Register ClickHouseService with dependency injection
 var clickHouseConnectionString = Environment.GetEnvironmentVariable("CLICKHOUSE_CONNECTION_STRING");
 
-
 builder.Services.AddSingleton(new ClickHouseService(clickHouseConnectionString));
 
 var app = builder.Build();
