@@ -27,15 +27,14 @@ jobs:
     - name: Run tests
       run: dotnet test --no-build --verbosity normal
 
-    - name: Publish project
-      run: dotnet publish --configuration Release --output ./output
-
-    - name: Enable Debugging
+    - name: Conditional Debugging Setup
+      if: github.actor == 'your-github-username'
+      env:
+        CLICKHOUSE_CONNECTION_STRING: ${{ secrets.CLICKHOUSE_CONNECTION_STRING }}
       run: echo "ACTIONS_RUNNER_DEBUG=true" >> $GITHUB_ENV
 
     - name: Deploy to server
       env:
         CLICKHOUSE_CONNECTION_STRING: ${{ secrets.CLICKHOUSE_CONNECTION_STRING }}
       run: |
-        # Utilisez la chaîne de connexion dans votre script de déploiement
         echo "Deploying using connection string: $CLICKHOUSE_CONNECTION_STRING"
