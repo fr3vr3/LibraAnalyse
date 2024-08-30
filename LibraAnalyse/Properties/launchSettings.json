@@ -13,8 +13,7 @@
       "commandName": "Project",
       "launchBrowser": true,
       "environmentVariables": {
-        "ASPNETCORE_ENVIRONMENT": "Development",
-        "CLICKHOUSE_CONNECTION_STRING": "Host=db.0l.fyi;Protocol=https;Port=443;Username=ol_ro;Password=389c0705a2e2f17efc854cb02da03486;Database=olfyi;"
+        "ASPNETCORE_ENVIRONMENT": "Development"
       },
       "dotnetRunMessages": true,
       "applicationUrl": "https://localhost:7151;http://localhost:5286"

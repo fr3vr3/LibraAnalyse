@@ -10,7 +10,7 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddRazorPages();
 
 // Register ClickHouseService with dependency injection
-var clickHouseConnectionString = Environment.GetEnvironmentVariable("CLICKHOUSE_CONNECTION_STRING");
+var clickHouseConnectionString = File.ReadAllText("C:\\credentials.txt");
 
 builder.Services.AddSingleton(new ClickHouseService(clickHouseConnectionString));
 
