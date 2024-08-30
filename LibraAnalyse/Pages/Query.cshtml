@@ -7,10 +7,13 @@
     <!-- Buttons Section -->
     <div class="mb-4">
         <form method="post">
+            <!-- Button to list all tables -->
             <button type="submit" class="btn btn-primary" formaction="/Query?handler=ListTables">List Tables</button>
+            <!-- Button to describe all tables -->
             <button type="submit" class="btn btn-secondary" formaction="/Query?handler=DescribeTables">Describe All Tables</button>
         </form>
 
+        <!-- Form to get content of a specific table -->
         <form method="post" class="form-inline mt-3">
             <div class="form-group mr-2">
                 <label for="TableName" class="mr-2">Table Name:</label>
@@ -24,6 +27,7 @@
     <div class="mb-4">
         <h2>Search for Address Mentions</h2>
         <form method="post">
+            <!-- Input for searching addresses -->
             <div class="form-group">
                 <input type="text" name="searchAddress" class="form-control" placeholder="Enter address to search" required>
             </div>
@@ -35,6 +39,7 @@
     <div class="mb-4">
         <h2>Run Custom Query</h2>
         <form method="post">
+            <!-- Textarea for custom SQL query -->
             <div class="form-group">
                 <textarea name="customQuery" class="form-control" placeholder="Enter your SQL query here" rows="3" required></textarea>
             </div>
@@ -47,6 +52,7 @@
     {
         <h2>Available Tables</h2>
         <ul class="list-group mb-4">
+            <!-- Displaying each table name in a list -->
             @foreach (var tableName in Model.TableNames)
             {
                 <li class="list-group-item">@tableName</li>
@@ -61,6 +67,7 @@
         @foreach (var table in Model.TableDescriptions)
         {
             <h3>@table.Key</h3>
+            <!-- Displaying table structure in a table -->
             <table class="table table-bordered mb-4">
                 <thead class="thead-dark">
                     <tr>
@@ -89,6 +96,7 @@
     @if (Model.SelectedTableContent != null && Model.SelectedTableContent.Rows.Count > 0)
     {
         <h2>Content of @Model.SelectedTableName</h2>
+        <!-- Displaying content of the selected table -->
         <table class="table table-bordered">
             <thead class="thead-dark">
                 <tr>
@@ -113,6 +121,7 @@
     }
     else if (Model.SelectedTableName != null)
     {
+        <!-- Displaying a warning if no data is found for the table -->
         <div class="alert alert-warning">
             No data found for table '@Model.SelectedTableName' or the table does not exist.
         </div>
@@ -123,6 +132,7 @@
     {
         <h2>Custom Query Result</h2>
         <p>Number of results: @Model.ResultCount</p>
+        <!-- Displaying the result of the custom query -->
         <table class="table table-bordered">
             <thead class="thead-dark">
                 <tr>
@@ -153,6 +163,7 @@
         @foreach (var result in Model.SearchResults)
         {
             <h3>Table: @result.Key</h3>
+            <!-- Displaying search results in a table -->
             <table class="table table-bordered mb-4">
                 <thead class="thead-dark">
                     <tr>
@@ -178,11 +189,13 @@
     }
     else if (Model.SearchResults != null)
     {
+        <!-- Displaying a warning if no results are found for the address -->
         <div class="alert alert-warning">
             No results found for "@Request.Form["searchAddress"]".
         </div>
     }
 
+    <!-- Footer Section -->
     <footer class="mt-auto py-3 bg-light text-muted">
         <div class="container">
             <p>&copy; 2024 LibraAnalyse. All rights reserved.</p>

@@ -12,12 +12,18 @@ namespace LibraAnalyse.Pages
 {
     public class QueryModel : PageModel
     {
+        #region Fields and Constructor
+
         private readonly ClickHouseService _clickHouseService;
 
         public QueryModel(ClickHouseService clickHouseService)
         {
             _clickHouseService = clickHouseService;
         }
+
+        #endregion
+
+        #region Static Table Definitions
 
         private static readonly string[] Tables =
         {
@@ -30,6 +36,10 @@ namespace LibraAnalyse.Pages
             "total_supply", "tower_list", "user_transaction", "vdf_difficulty"
         };
 
+        #endregion
+
+        #region Properties
+
         public List<string> TableNames { get; set; }
         public Dictionary<string, DataTable> TableDescriptions { get; set; }
         public string SelectedTableName { get; set; }
@@ -38,32 +48,65 @@ namespace LibraAnalyse.Pages
         public int ResultCount { get; private set; }
         public Dictionary<string, DataTable> SearchResults { get; private set; }
 
+        #endregion
+
+        #region Methods
+
+        /// <summary>
+        /// Lists all available tables in the database.
+        /// </summary>
+        /// <returns></returns>
         public async Task<IActionResult> OnPostListTablesAsync()
         {
-            string query = "SHOW TABLES";
-            var (dataTable, logs) = await _clickHouseService.ExecuteQueryAsync(query);
-            TableNames = dataTable.AsEnumerable().Select(row => row[0].ToString()).ToList();
+            try
+            {
+                string query = "SHOW TABLES";
+                var (dataTable, _) = await _clickHouseService.ExecuteQueryAsync(query);
+                TableNames = dataTable.AsEnumerable().Select(row => row[0].ToString()).ToList();
+            }
+            catch (Exception ex)
+            {
+                ModelState.AddModelError("", $"Error listing tables: {ex.Message}");
+            }
+
             return Page();
         }
 
+        /// <summary>
+        /// Describes the structure of each table listed.
+        /// </summary>
+        /// <returns></returns>
         public async Task<IActionResult> OnPostDescribeTablesAsync()
         {
-            if (TableNames == null || !TableNames.Any())
+            try
             {
-                await OnPostListTablesAsync();
+                if (TableNames == null || !TableNames.Any())
+                {
+                    await OnPostListTablesAsync();
+                }
+
+                TableDescriptions = new Dictionary<string, DataTable>();
+
+                foreach (var table in TableNames)
+                {
+                    string query = $"DESCRIBE TABLE {table}";
+                    var (dataTable, _) = await _clickHouseService.ExecuteQueryAsync(query);
+                    TableDescriptions.Add(table, dataTable);
+                }
+            }
+            catch (Exception ex)
+            {
+                ModelState.AddModelError("", $"Error describing tables: {ex.Message}");
             }
 
-            TableDescriptions = new Dictionary<string, DataTable>();
-
-            foreach (var table in TableNames)
-            {
-                string query = $"DESCRIBE TABLE {table}";
-                var (dataTable, logs) = await _clickHouseService.ExecuteQueryAsync(query);
-                TableDescriptions.Add(table, dataTable);
-            }
             return Page();
         }
 
+        /// <summary>
+        /// Retrieves the content of a specified table, limited to 100 rows.
+        /// </summary>
+        /// <param name="tableName">Name of the table to retrieve content from.</param>
+        /// <returns></returns>
         public async Task<IActionResult> OnPostGetTableContentAsync(string tableName)
         {
             if (string.IsNullOrWhiteSpace(tableName))
@@ -72,13 +115,26 @@ namespace LibraAnalyse.Pages
                 return Page();
             }
 
-            SelectedTableName = tableName;
-            string query = $"SELECT * FROM {SelectedTableName} LIMIT 100";
-            var (dataTable, logs) = await _clickHouseService.ExecuteQueryAsync(query);
-            SelectedTableContent = dataTable;
+            try
+            {
+                SelectedTableName = tableName;
+                string query = $"SELECT * FROM {SelectedTableName} LIMIT 100";
+                var (dataTable, _) = await _clickHouseService.ExecuteQueryAsync(query);
+                SelectedTableContent = dataTable;
+            }
+            catch (Exception ex)
+            {
+                ModelState.AddModelError("", $"Error getting table content: {ex.Message}");
+            }
+
             return Page();
         }
 
+        /// <summary>
+        /// Executes a custom SQL query and returns the results.
+        /// </summary>
+        /// <param name="customQuery">The custom SQL query to execute.</param>
+        /// <returns></returns>
         public async Task<IActionResult> OnPostRunCustomQueryAsync(string customQuery)
         {
             if (string.IsNullOrWhiteSpace(customQuery))
@@ -89,9 +145,10 @@ namespace LibraAnalyse.Pages
 
             try
             {
-                var (dataTable, logs) = await _clickHouseService.ExecuteQueryAsync(customQuery);
+                var (dataTable, _) = await _clickHouseService.ExecuteQueryAsync(customQuery);
                 CustomQueryResult = dataTable;
 
+                // Calculate the distinct count of account addresses as an additional query.
                 var countQuery = "SELECT COUNT(DISTINCT account_address) AS TotalCount FROM event;";
                 var (countTable, _) = await _clickHouseService.ExecuteQueryAsync(countQuery);
                 if (countTable.Rows.Count > 0)
@@ -107,6 +164,11 @@ namespace LibraAnalyse.Pages
             return Page();
         }
 
+        /// <summary>
+        /// Searches for a specific address across all relevant tables.
+        /// </summary>
+        /// <param name="searchAddress">The address to search for.</param>
+        /// <returns></returns>
         public async Task<IActionResult> OnPostSearchAddressAsync(string searchAddress)
         {
             if (string.IsNullOrWhiteSpace(searchAddress))
@@ -115,15 +177,14 @@ namespace LibraAnalyse.Pages
                 return Page();
             }
 
-            SearchResults = new Dictionary<string, DataTable>();
-            var logList = new List<string>();
-
-            string[] columnsToSearch = { "account_address", "address", "sender" };
-
             try
             {
-                // Remove "0x" if present and parse the address as a hexadecimal BigInteger
-                string addressForQuery = searchAddress.Any(c => char.IsLetter(c)) ? BigInteger.Parse("0" + searchAddress, System.Globalization.NumberStyles.HexNumber).ToString() : searchAddress;
+                SearchResults = new Dictionary<string, DataTable>();
+
+                // Convert the address to a BigInteger if it contains any letters (indicating it's hexadecimal).
+                string addressForQuery = searchAddress.Any(c => char.IsLetter(c))
+                    ? BigInteger.Parse("0" + searchAddress, System.Globalization.NumberStyles.HexNumber).ToString()
+                    : searchAddress;
 
                 foreach (var table in Tables)
                 {
@@ -131,21 +192,18 @@ namespace LibraAnalyse.Pages
                     var (describeTable, _) = await _clickHouseService.ExecuteQueryAsync(describeQuery);
                     var existingColumns = describeTable.AsEnumerable().Select(row => row["name"].ToString()).ToHashSet();
 
+                    var columnsToSearch = new[] { "account_address", "address", "sender" };
                     var validColumnsToSearch = columnsToSearch.Where(col => existingColumns.Contains(col)).ToArray();
-                    if (!validColumnsToSearch.Any())
-                    {
-                        continue;
-                    }
+                    if (!validColumnsToSearch.Any()) continue;
 
                     string query = $"SELECT * FROM {table} WHERE " +
                                    string.Join(" OR ", validColumnsToSearch.Select(col => $"{col} = '{addressForQuery}'"));
 
-                    var (dataTable, logs) = await _clickHouseService.ExecuteQueryAsync(query);
+                    var (dataTable, _) = await _clickHouseService.ExecuteQueryAsync(query);
                     if (dataTable.Rows.Count > 0)
                     {
                         SearchResults.Add(table, dataTable);
                     }
-                    logList.AddRange(logs);
                 }
             }
             catch (Exception ex)
@@ -155,5 +213,7 @@ namespace LibraAnalyse.Pages
 
             return Page();
         }
+
+        #endregion
     }
 }
