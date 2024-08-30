@@ -31,6 +31,21 @@
             </div>
         </form>
 
+        <!-- Display dynamically fetched table description -->
+        <div id="tableDescription" class="mt-4">
+            <!-- The table description will be displayed here -->
+        </div>
+
+        <!-- Form for querying by address -->
+        <form method="post">
+            <div class="query-section mb-4">
+                <h2>Query by Address</h2>
+                <label for="address" class="form-label">Enter Address:</label>
+                <input type="text" id="address" name="address" class="form-control" placeholder="Enter address, e.g., '123 Main St'" />
+                <button type="submit" asp-page-handler="QueryByAddress" class="btn btn-primary mt-2">Find Information</button>
+            </div>
+        </form>
+
         <!-- Form for executing a custom SQL query -->
         <form method="post">
             <div class="query-section mb-4">
@@ -78,5 +93,25 @@
             </div>
         }
     </div>
+
+    <!-- JavaScript to handle dynamic table description fetching -->
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            document.querySelectorAll('.table-link').forEach(function (element) {
+                element.addEventListener('click', function () {
+                    const tableName = this.getAttribute('data-table');
+                    fetch(`/api/ClickHouse/describe?tableName=${tableName}`)
+                        .then(response => response.json())
+                        .then(data => {
+                            // Assuming data contains the table description
+                            document.getElementById('tableDescription').innerHTML = data.description;
+                        })
+                        .catch(error => {
+                            console.error('Error fetching table description:', error);
+                        });
+                });
+            });
+        });
+    </script>
 </body>
 </html>
