@@ -1,12 +1,10 @@
 ﻿using Microsoft.AspNetCore.Mvc;
-using System.Threading.Tasks;
 using LibraAnalyse.Services;
+using System.Threading.Tasks;
 
 namespace LibraAnalyse.Controllers
 {
-    [ApiController]
-    [Route("api/[controller]")]
-    public class ClickHouseController : ControllerBase
+    public class ClickHouseController : Controller
     {
         private readonly ClickHouseService _clickHouseService;
 
@@ -15,18 +13,12 @@ namespace LibraAnalyse.Controllers
             _clickHouseService = clickHouseService;
         }
 
-        [HttpGet("query")]
-        public async Task<IActionResult> ExecuteQuery(string sqlQuery)
+        [HttpPost]
+        public async Task<IActionResult> ExecuteQuery(string query)
         {
-            try
-            {
-                var result = await _clickHouseService.ExecuteQueryAsync(sqlQuery);
-                return Ok(result);
-            }
-            catch (System.Exception ex)
-            {
-                return BadRequest(new { error = ex.Message });
-            }
+            var (dataTable, logs) = await _clickHouseService.ExecuteQueryAsync(query);
+            // Process the dataTable and logs as needed
+            return View(dataTable);  // Or return it as JSON, etc.
         }
     }
 }

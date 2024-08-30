@@ -1,61 +1,52 @@
 ﻿@page
 @model IndexModel
 @{
-    ViewData["Title"] = "Home page";
+    ViewData["Title"] = "Home";
 }
 
 <div class="container text-center">
     <header class="my-5">
-        <h1 class="display-3">LibraAnalyse</h1>
-        <p class="lead">Your gateway to data insights</p>
-        <nav class="nav justify-content-center">
-            <a class="nav-link" href="/Query">Run Queries</a>
-            <a class="nav-link" href="/InterestingData">Interesting Data</a>
-            <a class="nav-link" href="/Documentation">Documentation</a>
-        </nav>
+        <img src="/images/logo.png" alt="LibraAnalyse Logo" class="mb-4 logo">
+        <h1 class="display-4">LibraAnalyse</h1>
+        <p class="lead">Your gateway to powerful data insights.</p>
     </header>
 
     <section class="my-5">
-        <h2>Welcome to LibraAnalyse</h2>
-        <p>Explore the world of data with our powerful querying tools. Whether you’re looking to extract insights or analyze trends, LibraAnalyse is here to assist you.</p>
-        <a href="/Query" class="btn btn-primary">Get Started</a>
-    </section>
-
-    <section class="my-5">
-        <h3>Explore Interesting Data</h3>
-        <div class="row">
-            <div class="col-md-4">
-                <div class="card mb-4 shadow-sm">
+        <div class="row justify-content-center">
+            <div class="col-md-3">
+                <div class="card mb-4 shadow-sm border-0">
                     <div class="card-body">
-                        <h5 class="card-title">Real-time Analytics</h5>
-                        <p class="card-text">Access the latest trends and analytics data directly from our database.</p>
-                        <a href="/InterestingData/RealTimeAnalytics" class="btn btn-link">Explore Data</a>
+                        <h5 class="card-title">Run Queries</h5>
+                        <p class="card-text">Execute custom SQL queries.</p>
+                        <a href="/Query" class="btn btn-outline-primary btn-block">Run Queries</a>
                     </div>
                 </div>
             </div>
-            <div class="col-md-4">
-                <div class="card mb-4 shadow-sm">
+            <div class="col-md-3">
+                <div class="card mb-4 shadow-sm border-0">
                     <div class="card-body">
-                        <h5 class="card-title">Historical Data</h5>
-                        <p class="card-text">Dive into our archives to analyze historical data and identify trends over time.</p>
-                        <a href="/InterestingData/HistoricalData" class="btn btn-link">Explore Data</a>
+                        <h5 class="card-title">Explore Data</h5>
+                        <p class="card-text">Explore predefined data sets.</p>
+                        <a href="/InterestingData" class="btn btn-outline-primary btn-block">Explore Data</a>
                     </div>
                 </div>
             </div>
-            <div class="col-md-4">
-                <div class="card mb-4 shadow-sm">
+            <div class="col-md-3">
+                <div class="card mb-4 shadow-sm border-0">
                     <div class="card-body">
-                        <h5 class="card-title">Data Reports</h5>
-                        <p class="card-text">View comprehensive reports generated from our data sets, providing deep insights.</p>
-                        <a href="/InterestingData/Reports" class="btn btn-link">Explore Data</a>
+                        <h5 class="card-title">Documentation</h5>
+                        <p class="card-text">Learn how to use LibraAnalyse.</p>
+                        <a href="/Documentation" class="btn btn-outline-primary btn-block">View Documentation</a>
                     </div>
                 </div>
             </div>
         </div>
     </section>
 
-    <footer class="my-5">
-        <p>&copy; 2024 LibraAnalyse</p>
-        <p><a href="/Privacy">Privacy Policy</a></p>
+    <footer class="mt-auto py-3 bg-light text-muted">
+        <div class="container">
+            <p>&copy; 2024 LibraAnalyse. All rights reserved.</p>
+            <p><a href="/Privacy" class="text-secondary">Privacy Policy</a></p>
+        </div>
     </footer>
 </div>

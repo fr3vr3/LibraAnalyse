@@ -1,117 +1,105 @@
 ﻿@page
 @model LibraAnalyse.Pages.QueryModel
 
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Query ClickHouse</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
-</head>
-<body>
-    <div class="container my-5">
-        <h1 class="text-center">Query ClickHouse</h1>
+<div class="container mt-5">
+    <h1>ClickHouse Table Operations</h1>
 
-        <!-- Form for listing all tables -->
+    <!-- Buttons Section -->
+    <div class="mb-4">
         <form method="post">
-            <div class="query-section mb-4">
-                <h2>List All Tables</h2>
-                <button type="submit" asp-page-handler="ListTables" class="btn btn-primary">List Tables</button>
-            </div>
+            <button type="submit" class="btn btn-primary" formaction="/Query?handler=ListTables">List Tables</button>
+            <button type="submit" class="btn btn-secondary" formaction="/Query?handler=DescribeTables">Describe All Tables</button>
         </form>
 
-        <!-- Form for describing a specific table -->
-        <form method="post">
-            <div class="query-section mb-4">
-                <h2>Describe a Table</h2>
-                <label for="tableName" class="form-label">Enter Table Name:</label>
-                <input type="text" id="tableName" name="tableName" class="form-control" placeholder="Enter table name, e.g., 'user_transaction'" />
-                <button type="submit" asp-page-handler="DescribeTable" class="btn btn-primary mt-2">Describe Table</button>
+        <form method="post" class="form-inline mt-3">
+            <div class="form-group mr-2">
+                <label for="TableName" class="mr-2">Table Name:</label>
+                <input type="text" name="TableName" class="form-control" placeholder="Enter table name" required>
             </div>
+            <button type="submit" class="btn btn-success" formaction="/Query?handler=GetTableContent">Get Table Content</button>
         </form>
-
-        <!-- Display dynamically fetched table description -->
-        <div id="tableDescription" class="mt-4">
-            <!-- The table description will be displayed here -->
-        </div>
-
-        <!-- Form for querying by address -->
-        <form method="post">
-            <div class="query-section mb-4">
-                <h2>Query by Address</h2>
-                <label for="address" class="form-label">Enter Address:</label>
-                <input type="text" id="address" name="address" class="form-control" placeholder="Enter address, e.g., '123 Main St'" />
-                <button type="submit" asp-page-handler="QueryByAddress" class="btn btn-primary mt-2">Find Information</button>
-            </div>
-        </form>
-
-        <!-- Form for executing a custom SQL query -->
-        <form method="post">
-            <div class="query-section mb-4">
-                <h2>Custom SQL Query</h2>
-                <label for="sqlQuery" class="form-label">Enter SQL Query:</label>
-                <textarea id="sqlQuery" name="SqlQuery" class="form-control" rows="4">@Model.SqlQuery</textarea>
-                <button type="submit" asp-page-handler="ExecuteQuery" class="btn btn-primary mt-2">Run Query</button>
-            </div>
-        </form>
-
-        <!-- Display query results -->
-        @if (Model.QueryResult != null)
-        {
-            <div id="result" class="mt-4">
-                <h3>Query Results:</h3>
-                <table class="table table-bordered table-striped">
-                    <thead>
-                        <tr>
-                            @foreach (System.Data.DataColumn column in Model.QueryResult.Columns)
-                            {
-                                <th>@column.ColumnName</th>
-                            }
-                        </tr>
-                    </thead>
-                    <tbody>
-                        @foreach (System.Data.DataRow row in Model.QueryResult.Rows)
-                        {
-                            <tr>
-                                @foreach (var item in row.ItemArray)
-                                {
-                                    <td>@item</td>
-                                }
-                            </tr>
-                        }
-                    </tbody>
-                </table>
-            </div>
-        }
-
-        <!-- Display error messages -->
-        @if (!string.IsNullOrEmpty(Model.ErrorMessage))
-        {
-            <div class="alert alert-danger mt-3">
-                @Model.ErrorMessage
-            </div>
-        }
     </div>
 
-    <!-- JavaScript to handle dynamic table description fetching -->
-    <script>
-        document.addEventListener('DOMContentLoaded', function () {
-            document.querySelectorAll('.table-link').forEach(function (element) {
-                element.addEventListener('click', function () {
-                    const tableName = this.getAttribute('data-table');
-                    fetch(`/api/ClickHouse/describe?tableName=${tableName}`)
-                        .then(response => response.json())
-                        .then(data => {
-                            // Assuming data contains the table description
-                            document.getElementById('tableDescription').innerHTML = data.description;
-                        })
-                        .catch(error => {
-                            console.error('Error fetching table description:', error);
-                        });
-                });
-            });
-        });
-    </script>
-</body>
-</html>
+    <!-- List Tables Result -->
+    @if (Model.TableNames != null && Model.TableNames.Any())
+    {
+        <h2>Available Tables</h2>
+        <ul class="list-group mb-4">
+            @foreach (var tableName in Model.TableNames)
+            {
+                <li class="list-group-item">@tableName</li>
+            }
+        </ul>
+    }
+
+    <!-- Describe Tables Result -->
+    @if (Model.TableDescriptions != null && Model.TableDescriptions.Any())
+    {
+        <h2>Table Descriptions</h2>
+        @foreach (var table in Model.TableDescriptions)
+        {
+            <h3>@table.Key</h3>
+            <table class="table table-bordered mb-4">
+                <thead class="thead-dark">
+                    <tr>
+                        @foreach (System.Data.DataColumn column in table.Value.Columns)
+                        {
+                            <th>@column.ColumnName</th>
+                        }
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (System.Data.DataRow row in table.Value.Rows)
+                    {
+                        <tr>
+                            @foreach (var item in row.ItemArray)
+                            {
+                                <td>@item</td>
+                            }
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        }
+    }
+
+    <!-- Get Table Content Result -->
+    @if (Model.SelectedTableContent != null && Model.SelectedTableContent.Rows.Count > 0)
+    {
+        <h2>Content of @Model.SelectedTableName</h2>
+        <table class="table table-bordered">
+            <thead class="thead-dark">
+                <tr>
+                    @foreach (System.Data.DataColumn column in Model.SelectedTableContent.Columns)
+                    {
+                        <th>@column.ColumnName</th>
+                    }
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (System.Data.DataRow row in Model.SelectedTableContent.Rows)
+                {
+                    <tr>
+                        @foreach (var item in row.ItemArray)
+                        {
+                            <td>@item</td>
+                        }
+                    </tr>
+                }
+            </tbody>
+        </table>
+    }
+    else if (Model.SelectedTableName != null)
+    {
+        <div class="alert alert-warning">
+            No data found for table '@Model.SelectedTableName' or the table does not exist.
+        </div>
+    }
+
+    <footer class="mt-auto py-3 bg-light text-muted">
+        <div class="container">
+            <p>&copy; 2024 LibraAnalyse. All rights reserved.</p>
+            <p><a href="/Privacy" class="text-secondary">Privacy Policy</a></p>
+        </div>
+    </footer>
+</div>

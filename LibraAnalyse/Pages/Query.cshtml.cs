@@ -1,9 +1,11 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
+using System.Collections.Generic;
+using System.Data;
+using System.Linq;
 using System.Threading.Tasks;
 using LibraAnalyse.Services;
-using System.Data;
-
+    
 namespace LibraAnalyse.Pages
 {
     public class QueryModel : PageModel
@@ -15,107 +17,50 @@ namespace LibraAnalyse.Pages
             _clickHouseService = clickHouseService;
         }
 
+        // Properties to store results
+        public List<string> TableNames { get; set; }
+        public Dictionary<string, DataTable> TableDescriptions { get; set; }
         [BindProperty]
-        public string SqlQuery { get; set; }
+        public string TableName { get; set; }
+        public string SelectedTableName { get; set; }
+        public DataTable SelectedTableContent { get; set; }
 
-        public DataTable QueryResult { get; private set; }
-
-        // Property to hold error messages
-        public string ErrorMessage { get; private set; }
-
-        // Property to hold logs from the ClickHouseService
-        public string[] Logs { get; private set; }
-
-        public void OnGet()
-        {
-            // Initialize page or perform any setup needed
-        }
-
+        // Method to list all tables
         public async Task<IActionResult> OnPostListTablesAsync()
         {
-            SqlQuery = "SHOW TABLES";
-            return await ExecuteQueryAsync();
+            string query = "SHOW TABLES";
+            var (dataTable, logs) = await _clickHouseService.ExecuteQueryAsync(query);
+            TableNames = dataTable.AsEnumerable().Select(row => row[0].ToString()).ToList();
+            return Page();
         }
 
-        public async Task<IActionResult> OnPostDescribeTableAsync(string tableName)
-        {
-            if (string.IsNullOrWhiteSpace(tableName))
-            {
-                ErrorMessage = "Table name cannot be empty.";
-                return Page();
-            }
-
-            SqlQuery = $"DESCRIBE TABLE {tableName}";
-            return await ExecuteQueryAsync();
-        }
-
-        public Dictionary<string, DataTable> TableDescriptions { get; private set; } = new Dictionary<string, DataTable>();
-
+        // Method to describe all tables
         public async Task<IActionResult> OnPostDescribeTablesAsync()
         {
-            TableDescriptions = await DescribeTablesAsync(_clickHouseService);
-            return Page();
-        }
+            if (TableNames == null || !TableNames.Any())
+            {
+                await OnPostListTablesAsync();
+            }
 
-        private async Task<Dictionary<string, DataTable>> DescribeTablesAsync(ClickHouseService clickHouseService)
-        {
-            string[] tables = {
-            "ancestry", "beneficiary_policy", "block_metadata_transaction", "boundary_status",
-            "burn_counter", "burn_tracker", "coin_balance", "community_wallet",
-            "consensus_reward", "donor_voice_registry", "epoch_fee_maker_registry", "event",
-            "genesis_transaction", "ingested_files", "ingested_versions", "multi_action",
-            "multisig_account_owners", "ol_swap_1h", "script", "slow_wallet",
-            "slow_wallet_list", "state_checkpoint_transaction", "total_supply",
-            "tower_list", "user_transaction", "vdf_difficulty"
-        };
+            TableDescriptions = new Dictionary<string, DataTable>();
 
-            var descriptions = new Dictionary<string, DataTable>();
-
-            foreach (var table in tables)
+            foreach (var table in TableNames)
             {
                 string query = $"DESCRIBE TABLE {table}";
-                var (dataTable, logs) = await clickHouseService.ExecuteQueryAsync(query);
-                descriptions[table] = dataTable;
+                var (dataTable, logs) = await _clickHouseService.ExecuteQueryAsync(query);
+                TableDescriptions.Add(table, dataTable);
             }
-
-            return descriptions;
-        }
-
-        public async Task<IActionResult> OnPostExecuteQueryAsync()
-        {
-            if (string.IsNullOrWhiteSpace(SqlQuery))
-            {
-                ErrorMessage = "Query cannot be empty.";
-                return Page();
-            }
-
-            return await ExecuteQueryAsync();
-        }
-
-        private async Task<IActionResult> ExecuteQueryAsync()
-        {
-            try
-            {
-                // Call the ClickHouseService and capture both the DataTable and Logs
-                var (dataTable, logs) = await _clickHouseService.ExecuteQueryAsync(SqlQuery);
-
-                QueryResult = dataTable;
-                Logs = logs;
-
-                // Check if the DataTable is empty and set an appropriate error message
-                if (QueryResult.Rows.Count == 0)
-                {
-                    ErrorMessage = "The query returned no results.";
-                }
-            }
-            catch (System.Exception ex)
-            {
-                ErrorMessage = $"Error executing query: {ex.Message}";
-            }
-
             return Page();
         }
 
-
+        // Method to get content of a specific table
+        public async Task<IActionResult> OnPostGetTableContentAsync()
+        {
+            SelectedTableName = TableName;
+            string query = $"SELECT * FROM {SelectedTableName} LIMIT 1000"; // Adjust limit as needed
+            var (dataTable, logs) = await _clickHouseService.ExecuteQueryAsync(query);
+            SelectedTableContent = dataTable;
+            return Page();
+        }
     }
 }
