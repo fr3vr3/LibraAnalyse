@@ -6,6 +6,7 @@ using System.Data;
 using System.Linq;
 using System.Threading.Tasks;
 using LibraAnalyse.Services;
+using System.Numerics;
 
 namespace LibraAnalyse.Pages
 {
@@ -19,16 +20,16 @@ namespace LibraAnalyse.Pages
         }
 
         private static readonly string[] Tables =
-        {
-            "ancestry", "beneficiary_policy", "block_metadata_transaction",
-            "boundary_status", "burn_counter", "burn_tracker", "coin_balance",
-            "community_wallet", "consensus_reward", "donor_voice_registry",
-            "epoch_fee_maker_registry", "event", "genesis_transaction",
-            "ingested_files", "ingested_versions", "multi_action",
-            "multisig_account_owners", "ol_swap_1h", "script", "slow_wallet",
-            "slow_wallet_list", "state_checkpoint_transaction", "total_supply",
-            "tower_list", "user_transaction", "vdf_difficulty"
-        };
+    {
+    "ancestry", "beneficiary_policy", "block_metadata_transaction",
+    "boundary_status", "burn_counter", "burn_tracker", "coin_balance",
+    "community_wallet", "consensus_reward", "epoch_fee_maker_registry",
+    "event", "genesis_transaction", "ingested_files", "ingested_versions",
+    "multi_action", "multisig_account_owners", "ol_swap_1h", "script",
+    "slow_wallet", "slow_wallet_list", "state_checkpoint_transaction",
+    "total_supply", "tower_list", "user_transaction", "vdf_difficulty"
+};
+
 
         public List<string> TableNames { get; set; }
         public Dictionary<string, DataTable> TableDescriptions { get; set; }
@@ -59,7 +60,7 @@ namespace LibraAnalyse.Pages
 
             foreach (var table in TableNames)
             {
-                string query = $"DESCRIBE TABLE {table} LIMIT 100";
+                string query = $"DESCRIBE TABLE {table}";
                 var (dataTable, logs) = await _clickHouseService.ExecuteQueryAsync(query);
                 TableDescriptions.Add(table, dataTable);
             }
@@ -118,21 +119,22 @@ namespace LibraAnalyse.Pages
 
             try
             {
-                // Convert the input address from hex to BigInteger (remove 0x if present)
-                string addressForQuery = searchAddress.StartsWith("0x")
-                    ? searchAddress.Substring(2)
-                    : searchAddress;
+                // Remove "0x" if present and parse the address as a hexadecimal BigInteger
+                string addressForQuery = searchAddress.StartsWith("0x") ? searchAddress.Substring(2) : searchAddress;
 
-                // BigInteger addressAsBigInt;
-                // try
-                // {
-                //     addressAsBigInt = BigInteger.Parse(addressForQuery, System.Globalization.NumberStyles.HexNumber);
-                // }
-                // catch (FormatException ex)
-                // {
-                //     ModelState.AddModelError("", $"Invalid address format: {ex.Message}");
-                //     return Page();
-                // }
+
+                /* Parse the 64-character hexadecimal string into a BigInteger
+                BigInteger addressAsBigInt;
+                try
+                {
+                    addressAsBigInt = BigInteger.Parse(addressForQuery, System.Globalization.NumberStyles.HexNumber);
+                }
+                catch (FormatException ex)
+                {
+                    ModelState.AddModelError("", $"Invalid address format: {ex.Message}");
+                    return Page();
+                }
+                */
 
                 foreach (var table in Tables)
                 {
@@ -147,7 +149,7 @@ namespace LibraAnalyse.Pages
                     }
 
                     string query = $"SELECT * FROM {table} WHERE " +
-                                   string.Join(" OR ", validColumnsToSearch.Select(col => $"{col} = '{searchAddress}'"));
+                                   string.Join(" OR ", validColumnsToSearch.Select(col => $"{col} = {searchAddress}"));
 
                     var (dataTable, logs) = await _clickHouseService.ExecuteQueryAsync(query);
                     if (dataTable.Rows.Count > 0)

@@ -32,6 +32,7 @@ namespace LibraAnalyse.Services
                 if (!reader.HasRows)
                 {
                     logList.Add("Query executed successfully, but no rows were returned.");
+                    logList.Add($"Query: {query}");
                     return (new DataTable(), logList.ToArray());
                 }
 
@@ -51,11 +52,6 @@ namespace LibraAnalyse.Services
                         for (int i = 0; i < reader.FieldCount; i++)
                         {
                             var value = reader.GetValue(i);
-                            // if (value is BigInteger bigIntValue)
-                            // {
-                            //     row[i] = "0x" + bigIntValue.ToString("X").ToLower();  // Convert BigInteger to hexadecimal
-                            // }
-                            // else if (value is Array arrayValue)
                             if (value is Array arrayValue)
                             {
                                 row[i] = string.Join(", ", arrayValue.Cast<object>());  // Concatenate array elements
