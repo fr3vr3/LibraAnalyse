@@ -20,6 +20,28 @@
         </form>
     </div>
 
+    <!-- Search Address Section -->
+    <div class="mb-4">
+        <h2>Search for Address Mentions</h2>
+        <form method="post">
+            <div class="form-group">
+                <input type="text" name="SearchAddress" class="form-control" placeholder="Enter address to search" required>
+            </div>
+            <button type="submit" class="btn btn-primary" formaction="/Query?handler=SearchAddress">Search</button>
+        </form>
+    </div>
+
+    <!-- Custom Query Section -->
+    <div class="mb-4">
+        <h2>Run Custom Query</h2>
+        <form method="post">
+            <div class="form-group">
+                <textarea name="customQuery" class="form-control" placeholder="Enter your SQL query here" rows="3" required></textarea>
+            </div>
+            <button type="submit" class="btn btn-primary" formaction="/Query?handler=RunCustomQuery">Run Query</button>
+        </form>
+    </div>
+
     <!-- List Tables Result -->
     @if (Model.TableNames != null && Model.TableNames.Any())
     {
@@ -93,6 +115,71 @@
     {
         <div class="alert alert-warning">
             No data found for table '@Model.SelectedTableName' or the table does not exist.
+        </div>
+    }
+
+    <!-- Custom Query Result -->
+    @if (Model.CustomQueryResult != null && Model.CustomQueryResult.Rows.Count > 0)
+    {
+        <h2>Custom Query Result</h2>
+        <p>Number of results: @Model.ResultCount</p>
+        <table class="table table-bordered">
+            <thead class="thead-dark">
+                <tr>
+                    @foreach (System.Data.DataColumn column in Model.CustomQueryResult.Columns)
+                    {
+                        <th>@column.ColumnName</th>
+                    }
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (System.Data.DataRow row in Model.CustomQueryResult.Rows)
+                {
+                    <tr>
+                        @foreach (var item in row.ItemArray)
+                        {
+                            <td>@item</td>
+                        }
+                    </tr>
+                }
+            </tbody>
+        </table>
+    }
+
+    <!-- Search Address Result -->
+    @if (Model.SearchResults != null && Model.SearchResults.Any())
+    {
+        <h2>Search Results for "@Request.Form["SearchAddress"]"</h2>
+        @foreach (var result in Model.SearchResults)
+        {
+            <h3>Table: @result.Key</h3>
+            <table class="table table-bordered mb-4">
+                <thead class="thead-dark">
+                    <tr>
+                        @foreach (System.Data.DataColumn column in result.Value.Columns)
+                        {
+                            <th>@column.ColumnName</th>
+                        }
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (System.Data.DataRow row in result.Value.Rows)
+                    {
+                        <tr>
+                            @foreach (var item in row.ItemArray)
+                            {
+                                <td>@item</td>
+                            }
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        }
+    }
+    else if (Model.SearchResults != null)
+    {
+        <div class="alert alert-warning">
+            No results found for "@Request.Form["SearchAddress"]".
         </div>
     }
 

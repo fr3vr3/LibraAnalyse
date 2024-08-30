@@ -131,3 +131,16 @@ footer {
         padding: 3rem 0;
     }
 }
+
+.table td, .table th {
+    max-width: 150px; /* Set your desired max width */
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+    .table td:hover, .table th:hover {
+        overflow: auto;
+        white-space: normal;
+        word-wrap: break-word;
+    }

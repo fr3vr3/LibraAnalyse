@@ -29,50 +29,53 @@ namespace LibraAnalyse.Services
 
                 using var reader = await command.ExecuteReaderAsync();
 
-                if (reader.HasRows)
-                {
-                    logList.Add("Rows found:");
-                }
-                else
+                if (!reader.HasRows)
                 {
                     logList.Add("Query executed successfully, but no rows were returned.");
                     return (new DataTable(), logList.ToArray());
                 }
 
-                var dataTable = new DataTable();
+                var originalDataTable = new DataTable();
 
                 try
                 {
                     for (int i = 0; i < reader.FieldCount; i++)
                     {
-                        var columnType = reader.GetFieldType(i);
-                        if (columnType == null)
-                        {
-                            columnType = typeof(string);
-                        }
-
-                        dataTable.Columns.Add(reader.GetName(i), columnType);
+                        originalDataTable.Columns.Add(reader.GetName(i), typeof(string)); // Store everything as string
                     }
 
-                    dataTable.Load(reader);
-                }
-                catch (InvalidCastException ex)
-                {
-                    logList.Add($"InvalidCastException during DataTable.Load: {ex.Message}");
-                    throw new Exception(string.Join(Environment.NewLine, logList.ToArray()), ex);
+                    while (reader.Read())
+                    {
+                        var row = originalDataTable.NewRow();
+
+                        for (int i = 0; i < reader.FieldCount; i++)
+                        {
+                            var value = reader.GetValue(i);
+                            // if (value is BigInteger bigIntValue)
+                            // {
+                            //     row[i] = "0x" + bigIntValue.ToString("X").ToLower();  // Convert BigInteger to hexadecimal
+                            // }
+                            // else if (value is Array arrayValue)
+                            if (value is Array arrayValue)
+                            {
+                                row[i] = string.Join(", ", arrayValue.Cast<object>());  // Concatenate array elements
+                            }
+                            else
+                            {
+                                row[i] = value?.ToString();  // Default string conversion
+                            }
+                        }
+
+                        originalDataTable.Rows.Add(row);
+                    }
+
+                    return (originalDataTable, logList.ToArray());
                 }
                 catch (Exception ex)
                 {
                     logList.Add($"General error during DataTable.Load: {ex.Message}");
                     throw new Exception(string.Join(Environment.NewLine, logList.ToArray()), ex);
                 }
-
-                if (dataTable.Rows.Count == 0)
-                {
-                    logList.Add("DataTable is empty after loading data.");
-                }
-
-                return (dataTable, logList.ToArray());
             }
             catch (ClickHouse.Client.ClickHouseServerException serverEx)
             {
