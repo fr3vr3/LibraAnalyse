@@ -89,5 +89,6 @@ namespace LibraAnalyse.Services
                 throw new Exception(string.Join(Environment.NewLine, logList.ToArray()), ex); // Include logs in exception
             }
         }
+
     }
 }

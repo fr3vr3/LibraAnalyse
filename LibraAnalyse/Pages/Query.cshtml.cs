@@ -49,6 +49,38 @@ namespace LibraAnalyse.Pages
             return await ExecuteQueryAsync();
         }
 
+        public Dictionary<string, DataTable> TableDescriptions { get; private set; } = new Dictionary<string, DataTable>();
+
+        public async Task<IActionResult> OnPostDescribeTablesAsync()
+        {
+            TableDescriptions = await DescribeTablesAsync(_clickHouseService);
+            return Page();
+        }
+
+        private async Task<Dictionary<string, DataTable>> DescribeTablesAsync(ClickHouseService clickHouseService)
+        {
+            string[] tables = {
+            "ancestry", "beneficiary_policy", "block_metadata_transaction", "boundary_status",
+            "burn_counter", "burn_tracker", "coin_balance", "community_wallet",
+            "consensus_reward", "donor_voice_registry", "epoch_fee_maker_registry", "event",
+            "genesis_transaction", "ingested_files", "ingested_versions", "multi_action",
+            "multisig_account_owners", "ol_swap_1h", "script", "slow_wallet",
+            "slow_wallet_list", "state_checkpoint_transaction", "total_supply",
+            "tower_list", "user_transaction", "vdf_difficulty"
+        };
+
+            var descriptions = new Dictionary<string, DataTable>();
+
+            foreach (var table in tables)
+            {
+                string query = $"DESCRIBE TABLE {table}";
+                var (dataTable, logs) = await clickHouseService.ExecuteQueryAsync(query);
+                descriptions[table] = dataTable;
+            }
+
+            return descriptions;
+        }
+
         public async Task<IActionResult> OnPostExecuteQueryAsync()
         {
             if (string.IsNullOrWhiteSpace(SqlQuery))
@@ -83,5 +115,7 @@ namespace LibraAnalyse.Pages
 
             return Page();
         }
+
+
     }
 }
