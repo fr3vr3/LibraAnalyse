@@ -20,21 +20,18 @@ namespace LibraAnalyse.Pages
         }
 
         private static readonly string[] Tables =
-    {
-    "ancestry", "beneficiary_policy", "block_metadata_transaction",
-    "boundary_status", "burn_counter", "burn_tracker", "coin_balance",
-    "community_wallet", "consensus_reward", "epoch_fee_maker_registry",
-    "event", "genesis_transaction", "ingested_files", "ingested_versions",
-    "multi_action", "multisig_account_owners", "ol_swap_1h", "script",
-    "slow_wallet", "slow_wallet_list", "state_checkpoint_transaction",
-    "total_supply", "tower_list", "user_transaction", "vdf_difficulty"
-};
-
+        {
+            "ancestry", "beneficiary_policy", "block_metadata_transaction",
+            "boundary_status", "burn_counter", "burn_tracker", "coin_balance",
+            "community_wallet", "consensus_reward", "epoch_fee_maker_registry",
+            "event", "genesis_transaction", "ingested_files", "ingested_versions",
+            "multi_action", "multisig_account_owners", "ol_swap_1h", "script",
+            "slow_wallet", "slow_wallet_list", "state_checkpoint_transaction",
+            "total_supply", "tower_list", "user_transaction", "vdf_difficulty"
+        };
 
         public List<string> TableNames { get; set; }
         public Dictionary<string, DataTable> TableDescriptions { get; set; }
-        [BindProperty]
-        public string TableName { get; set; }
         public string SelectedTableName { get; set; }
         public DataTable SelectedTableContent { get; set; }
         public DataTable CustomQueryResult { get; private set; }
@@ -67,9 +64,15 @@ namespace LibraAnalyse.Pages
             return Page();
         }
 
-        public async Task<IActionResult> OnPostGetTableContentAsync()
+        public async Task<IActionResult> OnPostGetTableContentAsync(string tableName)
         {
-            SelectedTableName = TableName;
+            if (string.IsNullOrWhiteSpace(tableName))
+            {
+                ModelState.AddModelError("", "Table name cannot be empty.");
+                return Page();
+            }
+
+            SelectedTableName = tableName;
             string query = $"SELECT * FROM {SelectedTableName} LIMIT 100";
             var (dataTable, logs) = await _clickHouseService.ExecuteQueryAsync(query);
             SelectedTableContent = dataTable;
@@ -120,21 +123,7 @@ namespace LibraAnalyse.Pages
             try
             {
                 // Remove "0x" if present and parse the address as a hexadecimal BigInteger
-                string addressForQuery = searchAddress.StartsWith("0x") ? searchAddress.Substring(2) : searchAddress;
-
-
-                /* Parse the 64-character hexadecimal string into a BigInteger
-                BigInteger addressAsBigInt;
-                try
-                {
-                    addressAsBigInt = BigInteger.Parse(addressForQuery, System.Globalization.NumberStyles.HexNumber);
-                }
-                catch (FormatException ex)
-                {
-                    ModelState.AddModelError("", $"Invalid address format: {ex.Message}");
-                    return Page();
-                }
-                */
+                string addressForQuery = searchAddress.Any(c => char.IsLetter(c)) ? BigInteger.Parse("0" + searchAddress, System.Globalization.NumberStyles.HexNumber).ToString() : searchAddress;
 
                 foreach (var table in Tables)
                 {
@@ -149,7 +138,7 @@ namespace LibraAnalyse.Pages
                     }
 
                     string query = $"SELECT * FROM {table} WHERE " +
-                                   string.Join(" OR ", validColumnsToSearch.Select(col => $"{col} = {searchAddress}"));
+                                   string.Join(" OR ", validColumnsToSearch.Select(col => $"{col} = '{addressForQuery}'"));
 
                     var (dataTable, logs) = await _clickHouseService.ExecuteQueryAsync(query);
                     if (dataTable.Rows.Count > 0)
@@ -163,7 +152,7 @@ namespace LibraAnalyse.Pages
             {
                 ModelState.AddModelError("", $"Error executing search: {ex.Message}");
             }
-             
+
             return Page();
         }
     }

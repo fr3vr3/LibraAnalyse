@@ -14,7 +14,7 @@
         <form method="post" class="form-inline mt-3">
             <div class="form-group mr-2">
                 <label for="TableName" class="mr-2">Table Name:</label>
-                <input type="text" name="TableName" class="form-control" placeholder="Enter table name" required>
+                <input type="text" name="tableName" class="form-control" placeholder="Enter table name" required>
             </div>
             <button type="submit" class="btn btn-success" formaction="/Query?handler=GetTableContent">Get Table Content</button>
         </form>
@@ -25,7 +25,7 @@
         <h2>Search for Address Mentions</h2>
         <form method="post">
             <div class="form-group">
-                <input type="text" name="SearchAddress" class="form-control" placeholder="Enter address to search" required>
+                <input type="text" name="searchAddress" class="form-control" placeholder="Enter address to search" required>
             </div>
             <button type="submit" class="btn btn-primary" formaction="/Query?handler=SearchAddress">Search</button>
         </form>
@@ -149,7 +149,7 @@
     <!-- Search Address Result -->
     @if (Model.SearchResults != null && Model.SearchResults.Any())
     {
-        <h2>Search Results for "@Request.Form["SearchAddress"]"</h2>
+        <h2>Search Results for "@Request.Form["searchAddress"]"</h2>
         @foreach (var result in Model.SearchResults)
         {
             <h3>Table: @result.Key</h3>
@@ -179,7 +179,7 @@
     else if (Model.SearchResults != null)
     {
         <div class="alert alert-warning">
-            No results found for "@Request.Form["SearchAddress"]".
+            No results found for "@Request.Form["searchAddress"]".
         </div>
     }
 
