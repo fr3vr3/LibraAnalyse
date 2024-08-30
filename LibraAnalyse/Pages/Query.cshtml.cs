@@ -163,7 +163,7 @@ namespace LibraAnalyse.Pages
             {
                 ModelState.AddModelError("", $"Error executing search: {ex.Message}");
             }
-
+             
             return Page();
         }
     }
